@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  db:
+    image: ankane/pgvector
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: appdb
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+
+  web:
+    build: .
+    environment:
+      POSTGRES_HOST: db
+      CELERY_BROKER_URL: redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: .
+    command: celery -A app.tasks.app worker --loglevel=info
+    depends_on:
+      - db
+      - redis
